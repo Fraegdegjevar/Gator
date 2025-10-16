@@ -5,16 +5,6 @@ import (
 	"fmt"
 )
 
-func getConfigFilePath(fs FileSystem) (string, error) {
-	// Ensure file exists and read it in
-	filePath, err := fs.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("error getting %s filepath: %w", configFileName, err)
-	}
-	filePath += configFileName
-	return filePath, nil
-}
-
 // Note we don't call os.ReadFile etc. We call our filesystem interface.
 func Read(fs FileSystem) (Config, error) {
 	filePath, err := getConfigFilePath(fs)

@@ -41,8 +41,10 @@ func (OSFileSystem) Getwd() (string, error) {
 
 // Mock filesystem - purely for injecting to tests so we can mock up files for
 // unit test io. Note we include members here which will be accessed by receivers
-// when mocking input.
-type MockFileSystem struct {
+// when mocking input. NOTICE lowercase first letter - means unexported struct.
+// We are only going to use it when testing the config package, so it does not need
+// exporting.
+type mockFileSystem struct {
 	// files can be accessed by 'filepath' key, giving byte slice
 	// as a normal file would when io.Read
 	files map[string][]byte
@@ -54,7 +56,7 @@ type MockFileSystem struct {
 // functions we want to test - though during normal use, an OSFileSystem and
 //its corresponding receivers will be used.
 
-func (m *MockFileSystem) ReadFile(filename string) ([]byte, error) {
+func (m *mockFileSystem) ReadFile(filename string) ([]byte, error) {
 	data, ok := m.files[filename]
 	if !ok {
 		// Need to flag that the file is not found.
@@ -65,12 +67,12 @@ func (m *MockFileSystem) ReadFile(filename string) ([]byte, error) {
 }
 
 // Just add to the map representing our file system.
-func (m *MockFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
+func (m *mockFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
 	m.files[filename] = data
 	return nil
 }
 
 // Simply grab the wd from our MockFileSystem. We can set this directly when testing.
-func (m *MockFileSystem) Getwd() (string, error) {
+func (m *mockFileSystem) Getwd() (string, error) {
 	return m.wd, nil
 }
