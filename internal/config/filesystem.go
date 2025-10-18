@@ -44,35 +44,43 @@ func (OSFileSystem) Getwd() (string, error) {
 // when mocking input. NOTICE lowercase first letter - means unexported struct.
 // We are only going to use it when testing the config package, so it does not need
 // exporting.
-type mockFileSystem struct {
-	// files can be accessed by 'filepath' key, giving byte slice
+type MockFileSystem struct {
+	// Files can be accessed by 'filepath' key, giving byte slice
 	// as a normal file would when io.Read
-	files map[string][]byte
+	Files map[string][]byte
 	// A working directory we can set for testing
-	wd string
+	Wd string
+	// a counter for whether a write has occurred or not - for testing if write runs
+	WriteCalled int
+	// If we want write to fail so we test error handling
+	WriteFileShouldError error
 }
 
 // Pointer (as not 0 mem) receivers to MockFilesystem which will be called by the
 // functions we want to test - though during normal use, an OSFileSystem and
 //its corresponding receivers will be used.
 
-func (m *mockFileSystem) ReadFile(filename string) ([]byte, error) {
-	data, ok := m.files[filename]
+func (m *MockFileSystem) ReadFile(filename string) ([]byte, error) {
+	data, ok := m.Files[filename]
 	if !ok {
 		// Need to flag that the file is not found.
 		return nil, os.ErrNotExist
 	}
-
 	return data, nil
 }
 
-// Just add to the map representing our file system.
-func (m *mockFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
-	m.files[filename] = data
+// Just add to the map representing our file system. Increment counter representing writes for testing.
+func (m *MockFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
+	m.WriteCalled += 1
+	if m.WriteFileShouldError != nil {
+		return m.WriteFileShouldError
+	}
+
+	m.Files[filename] = data
 	return nil
 }
 
 // Simply grab the wd from our MockFileSystem. We can set this directly when testing.
-func (m *mockFileSystem) Getwd() (string, error) {
-	return m.wd, nil
+func (m *MockFileSystem) Getwd() (string, error) {
+	return m.Wd, nil
 }

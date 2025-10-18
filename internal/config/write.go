@@ -2,21 +2,24 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
+
+var ErrWriteFail = errors.New("write failed")
 
 // Write the config struct to JSON config file .gatorconfig.json
 func write(fs FileSystem, conf *Config) error {
 	// Get config filepath
 	filePath, err := getConfigFilePath(fs)
 	if err != nil {
-		return fmt.Errorf("error writing config to %s: %w", configFileName, err)
+		return fmt.Errorf("%w: error writing config to %s: %w", ErrWriteFail, configFileName, err)
 	}
 
 	//Marshal JSON
 	data, err := json.MarshalIndent(conf, "", "	")
 	if err != nil {
-		return fmt.Errorf("error marshaling config to JSONL %w", err)
+		return fmt.Errorf("%w: error marshaling config to JSON: %w", ErrWriteFail, err)
 	}
 	// Write file, Permission bits are linux permissions. First number, 0, tells Go
 	// that this is an octal (base 8) number. Second number are owner permissions, third
@@ -27,7 +30,7 @@ func write(fs FileSystem, conf *Config) error {
 	// if using an OSFileSystem - otherwise our test mocksystem WriteFile.
 	err = fs.WriteFile(filePath, data, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to write marshaled JSON to %v: %w", filePath, err)
+		return fmt.Errorf("%w: failed to write marshaled JSON to %v: %w", ErrWriteFail, filePath, err)
 	}
 	return nil
 }

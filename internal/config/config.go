@@ -5,11 +5,14 @@ import (
 	"fmt"
 )
 
-const configFileName = "/.gatorconfig.json"
+const configFileName = ".gatorconfig.json"
+
+// exported error
+var ErrNoUsername = errors.New("no username supplied")
 
 type Config struct {
-	DB_URL            string `json:"db_url"`
-	Current_user_name string `json:"current_user_name"`
+	DBURL           string `json:"db_url"`
+	CurrentUserName string `json:"current_user_name"`
 }
 
 func getConfigFilePath(fs FileSystem) (string, error) {
@@ -18,20 +21,20 @@ func getConfigFilePath(fs FileSystem) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error getting %s filepath: %w", configFileName, err)
 	}
-	filePath += configFileName
+	filePath += "/" + configFileName
 	return filePath, nil
 }
 
 func (c *Config) SetUser(fs FileSystem, username string) error {
 	if len(username) < 1 {
-		return errors.New("no username supplied to SetUser")
+		return ErrNoUsername
 	}
 
-	c.Current_user_name = username
+	c.CurrentUserName = username
 
 	err := write(fs, c)
 	if err != nil {
-		return fmt.Errorf("error setting user: %w", err)
+		return fmt.Errorf("error setting user in configuration file: %w", err)
 	}
 
 	return nil
