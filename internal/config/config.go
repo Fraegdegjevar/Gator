@@ -11,9 +11,8 @@ const configFileName = ".gatorconfig.json"
 var ErrNoUsername = errors.New("no username supplied")
 
 type Config struct {
-	DBURL            string `json:"db_url"`
-	CurrentUserName  string `json:"current_user_name"`
-	ConnectionString string `json:"connection_string"`
+	DBURL           string `json:"db_url"`
+	CurrentUserName string `json:"current_user_name"`
 }
 
 func getConfigFilePath(fs FileSystem) (string, error) {

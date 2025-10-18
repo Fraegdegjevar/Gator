@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fraegdegjevar/Gator/internal/command"
 	"github.com/Fraegdegjevar/Gator/internal/config"
+	_ "github.com/lib/pq"
 )
 
 func main() {
