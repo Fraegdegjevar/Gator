@@ -17,7 +17,7 @@ type Config struct {
 
 func getConfigFilePath(fs FileSystem) (string, error) {
 	// Ensure file exists and read it in
-	filePath, err := fs.Getwd()
+	filePath, err := fs.GetUserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("error getting %s filepath: %w", configFileName, err)
 	}

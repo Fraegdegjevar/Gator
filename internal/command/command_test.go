@@ -127,7 +127,7 @@ func TestHandlerLogin(t *testing.T) {
 				},
 				WriteFileShouldError: config.ErrWriteFail,
 			},
-			state:          &State{&config.Config{DBURL: "", CurrentUserName: "default"}},
+			state:          &State{Config: &config.Config{DBURL: "", CurrentUserName: "default"}},
 			cmd:            Command{Args: []string{"testfail"}},
 			expectedError:  config.ErrWriteFail,
 			expectedConfig: config.Config{DBURL: "", CurrentUserName: "testfail"},
@@ -149,4 +149,8 @@ func TestHandlerLogin(t *testing.T) {
 
 		})
 	}
+}
+
+func TestHandlerRegister(t *testing.T) {
+
 }

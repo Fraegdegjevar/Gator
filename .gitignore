@@ -2,7 +2,6 @@
 *.json
 *.out
 *.mod
-go.mod
 *.sum
 sqlconnectionstring
 sqlconnectionstring.*

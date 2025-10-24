@@ -15,6 +15,7 @@ type FileSystem interface {
 	ReadFile(filename string) ([]byte, error)
 	WriteFile(filename string, data []byte, permissions os.FileMode) error
 	Getwd() (string, error)
+	GetUserHomeDir() (string, error)
 }
 
 // OSFilesystem is the real implementation. It uses the os package and represents the
@@ -39,6 +40,10 @@ func (OSFileSystem) Getwd() (string, error) {
 	return os.Getwd()
 }
 
+func (OSFileSystem) GetUserHomeDir() (string, error) {
+	return os.UserHomeDir()
+}
+
 // Mock filesystem - purely for injecting to tests so we can mock up files for
 // unit test io. Note we include members here which will be accessed by receivers
 // when mocking input. NOTICE lowercase first letter - means unexported struct.
@@ -50,6 +55,8 @@ type MockFileSystem struct {
 	Files map[string][]byte
 	// A working directory we can set for testing
 	Wd string
+	//A home directory for our gatorconfig json
+	Homedir string
 	// a counter for whether a write has occurred or not - for testing if write runs
 	WriteCalled int
 	// If we want write to fail so we test error handling
@@ -83,4 +90,9 @@ func (m *MockFileSystem) WriteFile(filename string, data []byte, permissions os.
 // Simply grab the wd from our MockFileSystem. We can set this directly when testing.
 func (m *MockFileSystem) Getwd() (string, error) {
 	return m.Wd, nil
+}
+
+// Get home user dir - easy as above
+func (m *MockFileSystem) GetUserHomeDir() (string, error) {
+	return m.Homedir, nil
 }
