@@ -11,6 +11,7 @@ func Read(fs FileSystem) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	fmt.Printf("getConfigFilePath returned path: %v\n", filePath)
 
 	file, err := fs.ReadFile(filePath)
 	if err != nil {

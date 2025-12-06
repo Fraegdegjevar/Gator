@@ -37,5 +37,6 @@ func (c *Config) SetUser(fs FileSystem, username string) error {
 		return fmt.Errorf("error setting user in configuration file: %w", err)
 	}
 
+	fmt.Printf("user has been set: %v\n", username)
 	return nil
 }

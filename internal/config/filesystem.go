@@ -5,8 +5,7 @@ import (
 )
 
 //This is an interface to the file system. Several functions rely on IO with
-// the OS file system. This interface allows use of a mock interface for
-// unit testing functions without hitting our real file system.
+// the OS file system. This interface allows thorough testing with dependency injection
 
 // For a struct to implement this interface, it must implement all of the methods.
 // Notice interface abstracts basic file operations - the things the functions
@@ -44,12 +43,10 @@ func (OSFileSystem) GetUserHomeDir() (string, error) {
 	return os.UserHomeDir()
 }
 
-// Mock filesystem - purely for injecting to tests so we can mock up files for
+// A fake filesystem - purely for injecting to tests so we can mock up files for
 // unit test io. Note we include members here which will be accessed by receivers
-// when mocking input. NOTICE lowercase first letter - means unexported struct.
-// We are only going to use it when testing the config package, so it does not need
-// exporting.
-type MockFileSystem struct {
+// when mocking input.
+type FakeFileSystem struct {
 	// Files can be accessed by 'filepath' key, giving byte slice
 	// as a normal file would when io.Read
 	Files map[string][]byte
@@ -63,11 +60,11 @@ type MockFileSystem struct {
 	WriteFileShouldError error
 }
 
-// Pointer (as not 0 mem) receivers to MockFilesystem which will be called by the
+// Pointer (as not 0 mem) receivers to FakeFilesystem which will be called by the
 // functions we want to test - though during normal use, an OSFileSystem and
 //its corresponding receivers will be used.
 
-func (m *MockFileSystem) ReadFile(filename string) ([]byte, error) {
+func (m *FakeFileSystem) ReadFile(filename string) ([]byte, error) {
 	data, ok := m.Files[filename]
 	if !ok {
 		// Need to flag that the file is not found.
@@ -77,7 +74,7 @@ func (m *MockFileSystem) ReadFile(filename string) ([]byte, error) {
 }
 
 // Just add to the map representing our file system. Increment counter representing writes for testing.
-func (m *MockFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
+func (m *FakeFileSystem) WriteFile(filename string, data []byte, permissions os.FileMode) error {
 	m.WriteCalled += 1
 	if m.WriteFileShouldError != nil {
 		return m.WriteFileShouldError
@@ -88,11 +85,11 @@ func (m *MockFileSystem) WriteFile(filename string, data []byte, permissions os.
 }
 
 // Simply grab the wd from our MockFileSystem. We can set this directly when testing.
-func (m *MockFileSystem) Getwd() (string, error) {
+func (m *FakeFileSystem) Getwd() (string, error) {
 	return m.Wd, nil
 }
 
 // Get home user dir - easy as above
-func (m *MockFileSystem) GetUserHomeDir() (string, error) {
+func (m *FakeFileSystem) GetUserHomeDir() (string, error) {
 	return m.Homedir, nil
 }

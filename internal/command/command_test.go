@@ -1,12 +1,32 @@
 package command
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
 
 	"github.com/Fraegdegjevar/Gator/internal/config"
+	"github.com/Fraegdegjevar/Gator/internal/database"
+	_ "github.com/lib/pq"
 )
+
+// Define a pre-existing config file stub with test database details for tests that need it.
+var testConfigContent = `{"db_url":"postgres://postgres:postgres@localhost:5432/gator_test?sslmode=disable","current_user_name":""}`
+
+// A config struct we can test against - using the magic values stored in preExistingConfigContent
+var testConfig config.Config
+
+// Go runtime executes init function before main or test functions.
+// init passes the db_url magic value (set this above based on your test database) into a config struct to allow for easy reference
+// in tests below.
+func init() {
+	err := json.Unmarshal([]byte(testConfigContent), &testConfig)
+	if err != nil {
+		panic("failed to unmarshal testConfigContent byte(string): " + err.Error())
+	}
+}
 
 func TestRun(t *testing.T) {
 
@@ -81,12 +101,11 @@ func TestRun(t *testing.T) {
 
 func TestHandlerLogin(t *testing.T) {
 
-	// Define a pre-existing config file content for tests that need it.
-	preExistingConfigContent := `{"db_url":"","current_user_name":"default"}`
-
+	//Note that the Db in state is a database *Queries object using .New() on a SQL database connection.
+	// Test by hitting a test database
 	cases := []struct {
 		name           string
-		filesystem     *config.MockFileSystem
+		filesystem     *config.FakeFileSystem
 		state          *State
 		cmd            Command
 		expectedError  error
@@ -94,50 +113,59 @@ func TestHandlerLogin(t *testing.T) {
 	}{
 		{
 			name: "success",
-			filesystem: &config.MockFileSystem{
-				Wd: "test",
+			filesystem: &config.FakeFileSystem{
+				Homedir: "test",
 				Files: map[string][]byte{
-					"test/.gatorconfig.json": []byte(preExistingConfigContent),
+					"test/.gatorconfig.json": []byte(testConfigContent),
 				},
 			},
-			state:          &State{Config: &config.Config{DBURL: "", CurrentUserName: "default"}},
+			state:          &State{Config: &config.Config{}},
 			cmd:            Command{Args: []string{"testuser"}},
 			expectedError:  nil,
-			expectedConfig: config.Config{DBURL: "", CurrentUserName: "testuser"},
+			expectedConfig: config.Config{DBURL: testConfig.DBURL, CurrentUserName: "testuser"},
 		},
 		{
 			name: "fail no username",
-			filesystem: &config.MockFileSystem{
-				Wd: "test",
+			filesystem: &config.FakeFileSystem{
+				Homedir: "test",
 				Files: map[string][]byte{
-					"test/.gatorconfig.json": []byte(preExistingConfigContent),
+					"test/.gatorconfig.json": []byte(testConfigContent),
 				},
 			},
-			state:          &State{Config: &config.Config{DBURL: "", CurrentUserName: "default"}},
+			state:          &State{Config: &config.Config{}},
 			cmd:            Command{Args: []string{}},
 			expectedError:  config.ErrNoUsername,
-			expectedConfig: config.Config{DBURL: "", CurrentUserName: "default"},
+			expectedConfig: config.Config{DBURL: testConfig.DBURL, CurrentUserName: "default"},
 		},
 		{
 			name: "fail as SetUser fails",
-			filesystem: &config.MockFileSystem{
-				Wd: "test",
+			filesystem: &config.FakeFileSystem{
+				Homedir: "test",
 				Files: map[string][]byte{
-					"test/.gatorconfig.json": []byte(preExistingConfigContent),
+					"test/.gatorconfig.json": []byte(testConfigContent),
 				},
 				WriteFileShouldError: config.ErrWriteFail,
 			},
-			state:          &State{Config: &config.Config{DBURL: "", CurrentUserName: "default"}},
+			state:          &State{Config: &config.Config{}},
 			cmd:            Command{Args: []string{"testfail"}},
 			expectedError:  config.ErrWriteFail,
-			expectedConfig: config.Config{DBURL: "", CurrentUserName: "testfail"},
+			expectedConfig: config.Config{DBURL: testConfig.DBURL, CurrentUserName: "testfail"},
+		},
+		{
+			name: "fail as user does not exist in db",
 		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			tt := tt
-			err := HandlerLogin(tt.filesystem, tt.state, tt.cmd)
+			// Open a connection pool to the test database specified in testConfig initialised with init()
+			tdb, err := sql.Open("postgres", testConfig.DBURL)
+			if err != nil {
+				t.Fatalf("error connecting to test database: %v", err)
+			}
+			tt.state.Db = database.New(tdb)
+			err = HandlerLogin(tt.filesystem, tt.state, tt.cmd)
 
 			if !errors.Is(err, tt.expectedError) {
 				t.Errorf("expected error: %v but got: %v", tt.expectedError, err)

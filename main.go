@@ -58,7 +58,7 @@ func main() {
 	// (i.e ./Gator or even (go run .))
 	// os.Args[0] -> Program Name (guaranteed if this program is running)
 	// os.Args[1] -> SHOULD be a command name.
-	// os.Args[2:] -> OPTIONAL args for the command (not all cmd need args)
+	// os.Args[2:] -> OPTIONAL args for the command (not all cmds need args)
 	commandName := input[1]
 	//fmt.Printf("command: %v\n", commandName)
 	commandArgs := input[2:]

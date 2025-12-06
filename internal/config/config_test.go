@@ -10,9 +10,9 @@ import (
 func TestRead(t *testing.T) {
 
 	// Our mock filesystem with the file
-	fsCorrect := MockFileSystem{
-		Wd:    "test",
-		Files: make(map[string][]byte),
+	fsCorrect := FakeFileSystem{
+		Homedir: "test",
+		Files:   make(map[string][]byte),
 	}
 	// Mock json we insert into mockfs to test read
 	mockConfig := Config{
@@ -28,9 +28,9 @@ func TestRead(t *testing.T) {
 
 	//Mock filesystem that will be missing the config
 	// Our mock filesystem with the file
-	fsMissing := MockFileSystem{
-		Wd:    "test",
-		Files: make(map[string][]byte),
+	fsMissing := FakeFileSystem{
+		Homedir: "test",
+		Files:   make(map[string][]byte),
 	}
 
 	cases := []struct {
@@ -70,9 +70,9 @@ func TestRead(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	fs := &MockFileSystem{
-		Files: make(map[string][]byte),
-		Wd:    "test",
+	fs := &FakeFileSystem{
+		Files:   make(map[string][]byte),
+		Homedir: "test",
 	}
 
 	correctConfig := Config{
@@ -136,7 +136,7 @@ func TestSetUser(t *testing.T) {
 		name                   string
 		inputUsername          string
 		inputConfig            *Config
-		fileSystem             MockFileSystem
+		fileSystem             FakeFileSystem
 		expectedError          error
 		expectedConfigUserName string
 		expectedWrite          bool
@@ -146,7 +146,7 @@ func TestSetUser(t *testing.T) {
 			name:                   "no username error and no write_tst",
 			inputUsername:          "",
 			inputConfig:            &Config{CurrentUserName: "default"},
-			fileSystem:             MockFileSystem{Wd: "tst", Files: make(map[string][]byte), WriteCalled: 0},
+			fileSystem:             FakeFileSystem{Homedir: "tst", Files: make(map[string][]byte), WriteCalled: 0},
 			expectedError:          ErrNoUsername,
 			expectedConfigUserName: "default",
 			expectedWrite:          false,
@@ -156,7 +156,7 @@ func TestSetUser(t *testing.T) {
 			name:                   "write_failed_tst",
 			inputUsername:          "writefail",
 			inputConfig:            &Config{},
-			fileSystem:             MockFileSystem{Wd: "tst", WriteCalled: 0, Files: make(map[string][]byte)},
+			fileSystem:             FakeFileSystem{Homedir: "tst", WriteCalled: 0, Files: make(map[string][]byte)},
 			expectedError:          ErrWriteFail,
 			expectedConfigUserName: "writefail",
 			expectedWrite:          true,
@@ -166,7 +166,7 @@ func TestSetUser(t *testing.T) {
 			name:                   "success_set user_&_write_file_tst",
 			inputUsername:          "testsuccess",
 			inputConfig:            &Config{CurrentUserName: "default"},
-			fileSystem:             MockFileSystem{Wd: "tst", Files: make(map[string][]byte), WriteCalled: 0},
+			fileSystem:             FakeFileSystem{Homedir: "tst", Files: make(map[string][]byte), WriteCalled: 0},
 			expectedError:          nil,
 			expectedConfigUserName: "testsuccess",
 			expectedWrite:          true,
